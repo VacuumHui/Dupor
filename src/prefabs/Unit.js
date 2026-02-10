@@ -1,3 +1,5 @@
+import { getResponsiveMetrics } from '../utils/Responsive.js';
+
 export class Unit extends Phaser.GameObjects.Container {
   constructor(scene, x, y, cfg) {
     super(scene, x, y);
@@ -13,14 +15,22 @@ export class Unit extends Phaser.GameObjects.Container {
     this.moves = cfg.moves || [];
     this.currentIntent = null;
 
-    this.bodyRect = scene.add.rectangle(0, 0, 130, 130, this.isPlayer ? 0x204060 : 0x402020).setStrokeStyle(2, 0xffffff);
-    this.nameText = scene.add.text(0, -76, this.name, { fontSize: '14px', color: '#fff' }).setOrigin(0.5);
-    this.hpBar = scene.add.rectangle(0, 78, 110, 8, 0xe74c3c).setOrigin(0.5);
-    this.hpText = scene.add.text(0, 92, '', { fontSize: '11px', color: '#fff' }).setOrigin(0.5);
-    this.shieldText = scene.add.text(0, 58, '', { fontSize: '10px', color: '#7ec8ff' }).setOrigin(0.5);
-    this.statusText = scene.add.text(0, 108, '', { fontSize: '10px', color: '#9eff9e' }).setOrigin(0.5);
-    this.intentText = scene.add.text(0, -96, '', { fontSize: '12px', color: '#ffd27f' }).setOrigin(0.5);
-    this.dropZone = scene.add.zone(0,0,140,140).setRectangleDropZone(140,140);
+    const metrics = getResponsiveMetrics(scene);
+    const unitScale = metrics.isMobile ? 1.12 : 1;
+    const size = Math.round(130 * unitScale);
+    const hpWidth = Math.round(110 * unitScale);
+    const font = (v) => metrics.font(v * unitScale);
+
+    this.bodyRect = scene.add.rectangle(0, 0, size, size, this.isPlayer ? 0x204060 : 0x402020).setStrokeStyle(2, 0xffffff);
+    this.nameText = scene.add.text(0, Math.round(-76 * unitScale), this.name, { fontSize: font(14), color: '#fff' }).setOrigin(0.5);
+    this.hpBar = scene.add.rectangle(0, Math.round(78 * unitScale), hpWidth, Math.round(8 * unitScale), 0xe74c3c).setOrigin(0.5);
+    this.hpText = scene.add.text(0, Math.round(92 * unitScale), '', { fontSize: font(11), color: '#fff' }).setOrigin(0.5);
+    this.shieldText = scene.add.text(0, Math.round(58 * unitScale), '', { fontSize: font(10), color: '#7ec8ff' }).setOrigin(0.5);
+    this.statusText = scene.add.text(0, Math.round(108 * unitScale), '', { fontSize: font(10), color: '#9eff9e' }).setOrigin(0.5);
+    this.intentText = scene.add.text(0, Math.round(-96 * unitScale), '', { fontSize: font(12), color: '#ffd27f' }).setOrigin(0.5);
+    this.dropZone = scene.add.zone(0, 0, size + 10, size + 10).setRectangleDropZone(size + 10, size + 10);
+    this.hpBarMaxWidth = hpWidth;
+
     this.add([this.bodyRect, this.nameText, this.hpBar, this.hpText, this.shieldText, this.statusText, this.intentText, this.dropZone]);
     this.updateUI();
     scene.add.existing(this);
@@ -53,7 +63,7 @@ export class Unit extends Phaser.GameObjects.Container {
   resetShield() { this.shield = 0; this.updateUI(); }
 
   updateUI() {
-    this.hpBar.width = 110 * (this.hp / this.maxHp);
+    this.hpBar.width = this.hpBarMaxWidth * (this.hp / this.maxHp);
     this.hpText.setText(`${this.hp}/${this.maxHp} HP`);
     this.shieldText.setText(this.shield > 0 ? `🛡 ${this.shield}` : '');
     this.updateStatusUI();

@@ -1,17 +1,25 @@
 import { EVENTS_DB } from '../data/events.js';
 import { GameState, createCardInstance } from '../state/GameState.js';
+import { getResponsiveMetrics } from '../utils/Responsive.js';
 
 export class EventScene extends Phaser.Scene {
   constructor() { super('EventScene'); }
 
   create() {
-    this.add.rectangle(0,0,this.scale.width,this.scale.height,0x121218).setOrigin(0);
+    this.metrics = getResponsiveMetrics(this);
+    this.add.rectangle(0, 0, this.scale.width, this.scale.height, 0x121218).setOrigin(0);
     this.eventData = Phaser.Utils.Array.GetRandom(EVENTS_DB);
-    this.add.text(80, 60, this.eventData.title, { fontSize: '42px', color: '#fff' });
-    this.log = this.add.text(80, 130, this.eventData.text, { fontSize: '20px', color: '#aaa', wordWrap: { width: this.scale.width - 160 } });
+    this.add.text(this.metrics.value(70), this.metrics.value(70), this.eventData.title, { fontSize: this.metrics.font(42), color: '#fff' });
+    this.log = this.add.text(this.metrics.value(70), this.metrics.value(150), this.eventData.text, {
+      fontSize: this.metrics.font(22),
+      color: '#aaa',
+      wordWrap: { width: this.scale.width - this.metrics.value(140) },
+    });
+
     this.eventData.options.forEach((opt, idx) => {
-      const b = this.add.rectangle(300, 240 + idx * 90, 460, 66, 0x2c2c40).setInteractive();
-      this.add.text(300, 240 + idx * 90, opt.label, { fontSize: '22px', color: '#fff' }).setOrigin(0.5);
+      const y = this.metrics.value(300) + idx * this.metrics.value(102);
+      const b = this.add.rectangle(this.scale.width / 2, y, this.metrics.value(620), this.metrics.value(82), 0x2c2c40).setInteractive();
+      this.add.text(this.scale.width / 2, y, opt.label, { fontSize: this.metrics.font(24), color: '#fff' }).setOrigin(0.5);
       b.on('pointerdown', () => this.choose(opt));
     });
   }

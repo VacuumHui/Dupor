@@ -22,7 +22,10 @@ const config = {
   width: window.innerWidth,
   height: window.innerHeight,
   backgroundColor: '#0f1220',
-  scale: { mode: Phaser.Scale.RESIZE, autoCenter: Phaser.Scale.CENTER_BOTH },
+  scale: {
+    mode: Phaser.Scale.RESIZE,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+  },
   scene: [MenuScene, MapScene, BattleScene, RestScene, EventScene, ShopScene, UIScene],
 };
 
@@ -43,5 +46,6 @@ function updateRotateHint() {
   const portrait = window.innerHeight > window.innerWidth;
   rotateOverlay.classList.toggle('hidden', !portrait);
 }
+
 window.addEventListener('resize', updateRotateHint);
 updateRotateHint();
