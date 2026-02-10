@@ -7,32 +7,44 @@ html, body {
   background: #0b0b14;
   color: #ddd;
   font-family: 'Trebuchet MS', sans-serif;
+  touch-action: none;
 }
-#game-root { width: 100vw; height: 100vh; }
+
+#game-root {
+  width: 100vw;
+  height: 100vh;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
 .overlay {
   position: fixed;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(3,3,10,0.84);
+  background: rgba(3, 3, 10, 0.84);
   z-index: 20;
 }
+
 .hidden { display: none; }
+
 #start-btn {
-  padding: 14px 22px;
-  font-size: 16px;
+  padding: 18px 28px;
+  font-size: clamp(16px, 2.4vw, 28px);
   border: 1px solid #8855ff;
+  border-radius: 8px;
   background: #1e1230;
   color: #fff;
   cursor: pointer;
 }
+
 #rotate-overlay p {
-  font-size: 22px;
+  font-size: clamp(18px, 2.7vw, 28px);
   padding: 20px;
-  background: rgba(0,0,0,0.35);
+  background: rgba(0, 0, 0, 0.35);
   border: 1px solid #567;
 }
+
 #debug-console {
   position: fixed;
   left: 0;

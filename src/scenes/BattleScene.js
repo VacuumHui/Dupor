@@ -7,34 +7,41 @@ import { RelicManager } from '../managers/RelicManager.js';
 import { executeAction } from '../managers/ActionManager.js';
 import { RewardManager } from '../managers/RewardManager.js';
 import { Card } from '../prefabs/Card.js';
+import { getResponsiveMetrics } from '../utils/Responsive.js';
 
 export class BattleScene extends Phaser.Scene {
   constructor() { super('BattleScene'); }
 
   create(data) {
-    this.add.rectangle(0,0,this.scale.width,this.scale.height,0x161220).setOrigin(0);
+    this.metrics = getResponsiveMetrics(this);
+    this.cardScale = this.metrics.isMobile ? 1.15 : 1;
+
+    this.add.rectangle(0, 0, this.scale.width, this.scale.height, 0x161220).setOrigin(0);
     this.effectManager = new EffectManager(this);
     this.playerTurn = true;
     this.maxMana = GameState.maxMana;
     this.currentMana = this.maxMana;
-    this.player = new Unit(this, 220, this.scale.height * 0.48, { name: 'Hero', hp: GameState.currentHp, isPlayer: true, unitKey: 'hero' });
+
+    this.player = new Unit(this, this.metrics.value(240), this.scale.height * 0.46, { name: 'Hero', hp: GameState.currentHp, isPlayer: true, unitKey: 'hero' });
     this.enemies = EnemyFactory.createEnemies(this, data.boss ? GameState.bosses[GameState.act] : undefined);
 
     this.relicManager = new RelicManager(this);
     this.relicManager.trigger('onBattleStart', { source: this.player, target: this.player });
 
-    this.trashZone = this.add.zone(this.scale.width - 90, this.scale.height - 80, 140, 90).setRectangleDropZone(140,90);
-    this.add.rectangle(this.scale.width - 90, this.scale.height - 80, 140, 90, 0x552222).setStrokeStyle(2,0xff4444);
-    this.add.text(this.scale.width - 90, this.scale.height - 80, 'TRASH', { fontSize: '20px', color: '#fff' }).setOrigin(0.5);
+    const trashW = this.metrics.value(170);
+    const trashH = this.metrics.value(95);
+    this.trashZone = this.add.zone(this.scale.width - this.metrics.value(110), this.scale.height - this.metrics.value(90), trashW, trashH).setRectangleDropZone(trashW, trashH);
+    this.add.rectangle(this.trashZone.x, this.trashZone.y, trashW, trashH, 0x552222).setStrokeStyle(2, 0xff4444);
+    this.add.text(this.trashZone.x, this.trashZone.y, 'TRASH', { fontSize: this.metrics.font(20), color: '#fff' }).setOrigin(0.5);
 
     this.handManager = new HandManager(this);
     this.input.on('drop', (p, gameObject, dropZone) => gameObject.emit('drop', p, dropZone));
 
-    this.endBtn = this.add.rectangle(this.scale.width - 120, this.scale.height - 180, 170, 52, 0x2f3640).setInteractive();
-    this.add.text(this.endBtn.x, this.endBtn.y, 'END TURN', { fontSize: '22px', color: '#fff' }).setOrigin(0.5);
+    this.endBtn = this.add.rectangle(this.scale.width - this.metrics.value(120), this.scale.height - this.metrics.value(205), this.metrics.value(190), this.metrics.value(70), 0x2f3640).setInteractive();
+    this.add.text(this.endBtn.x, this.endBtn.y, 'END TURN', { fontSize: this.metrics.font(24), color: '#fff' }).setOrigin(0.5);
     this.endBtn.on('pointerdown', () => this.endTurn());
 
-    this.manaText = this.add.text(30, this.scale.height - 180, '', { fontSize: '24px', color: '#8ee' });
+    this.manaText = this.add.text(this.metrics.value(30), this.scale.height - this.metrics.value(205), '', { fontSize: this.metrics.font(26), color: '#8ee' });
     this.updateBattleUI();
     this.startPlayerTurn();
   }
@@ -83,27 +90,30 @@ export class BattleScene extends Phaser.Scene {
     GameState.level += 1;
     this.game.events.emit('UPDATE_UI');
 
-    const overlay = this.add.rectangle(this.scale.width/2, this.scale.height/2, this.scale.width, this.scale.height, 0x000, 0.85);
-    this.add.text(this.scale.width/2, 60, 'VICTORY - Choose 1 card', { fontSize: '34px', color: '#fff' }).setOrigin(0.5);
+    this.add.rectangle(this.scale.width / 2, this.scale.height / 2, this.scale.width, this.scale.height, 0x000, 0.85);
+    this.add.text(this.scale.width / 2, this.metrics.value(70), 'VICTORY - Choose 1 card', { fontSize: this.metrics.font(34), color: '#fff' }).setOrigin(0.5);
+
     const choices = RewardManager.rollCardChoices();
+    const spacing = this.metrics.value(220);
     choices.forEach((ci, idx) => {
-      const card = new Card(this, this.scale.width/2 - 180 + idx * 180, 280, ci);
+      const card = new Card(this, this.scale.width / 2 - spacing + idx * spacing, this.metrics.value(320), ci);
       card.setInteractive().on('pointerdown', () => {
         GameState.deck.push(ci);
         this.scene.start('MapScene');
         this.game.events.emit('UPDATE_UI');
       });
     });
-    const skip = this.add.text(this.scale.width/2, 520, 'Skip', { fontSize: '24px', color: '#aaa' }).setOrigin(0.5).setInteractive();
+
+    const skip = this.add.text(this.scale.width / 2, this.metrics.value(590), 'Skip', { fontSize: this.metrics.font(28), color: '#aaa' }).setOrigin(0.5).setInteractive();
     skip.on('pointerdown', () => this.scene.start('MapScene'));
   }
 
   loseBattle() {
     GameState.currentHp = 0;
     this.game.events.emit('UPDATE_UI');
-    const overlay = this.add.rectangle(this.scale.width/2, this.scale.height/2, this.scale.width, this.scale.height, 0x000, 0.85);
-    this.add.text(this.scale.width/2, this.scale.height/2 - 40, 'YOU DIED', { fontSize: '72px', color: '#ff4d4d' }).setOrigin(0.5);
-    const b = this.add.text(this.scale.width/2, this.scale.height/2 + 60, 'Back to Menu', { fontSize: '28px', color: '#fff' }).setOrigin(0.5).setInteractive();
+    this.add.rectangle(this.scale.width / 2, this.scale.height / 2, this.scale.width, this.scale.height, 0x000, 0.85);
+    this.add.text(this.scale.width / 2, this.scale.height / 2 - this.metrics.value(40), 'YOU DIED', { fontSize: this.metrics.font(72), color: '#ff4d4d' }).setOrigin(0.5);
+    const b = this.add.text(this.scale.width / 2, this.scale.height / 2 + this.metrics.value(70), 'Back to Menu', { fontSize: this.metrics.font(32), color: '#fff' }).setOrigin(0.5).setInteractive();
     b.on('pointerdown', () => this.scene.start('MenuScene'));
   }
 

@@ -2,10 +2,12 @@ import { Card } from '../prefabs/Card.js';
 import { GameState } from '../state/GameState.js';
 import { CardLogic } from '../utils/CardLogic.js';
 import { executeAction } from './ActionManager.js';
+import { getResponsiveMetrics } from '../utils/Responsive.js';
 
 export class HandManager {
   constructor(scene) {
     this.scene = scene;
+    this.metrics = getResponsiveMetrics(scene);
     this.drawPile = Phaser.Utils.Array.Shuffle([...GameState.deck]);
     this.discardPile = [];
     this.hand = [];
@@ -33,8 +35,8 @@ export class HandManager {
 
   layoutHand() {
     const centerX = this.scene.scale.width * 0.47;
-    const baseY = this.scene.scale.height - 120;
-    const spacing = 120;
+    const baseY = this.scene.scale.height - this.metrics.value(this.metrics.isMobile ? 150 : 120);
+    const spacing = this.metrics.value(this.metrics.isMobile ? 132 : 120);
     this.hand.forEach((c, i) => {
       this.scene.tweens.add({ targets: c, x: centerX + (i - (this.hand.length - 1) / 2) * spacing, y: baseY, duration: 150 });
       c.setDepth(20 + i);
@@ -44,7 +46,7 @@ export class HandManager {
   bindCardInput(card) {
     card.on('pointerdown', () => { this.dragStart = Date.now(); });
     card.on('pointerup', () => {
-      if (Date.now() - this.dragStart < 180) {
+      if (Date.now() - this.dragStart < 230) {
         card.toggleMode(!card.isZoomed);
       }
     });
@@ -54,7 +56,7 @@ export class HandManager {
       card.x = dragX; card.y = dragY;
       // магнитный stack drag
       this.hand.forEach((other) => {
-        if (other !== card && Phaser.Math.Distance.Between(card.x, card.y, other.x, other.y) < 70) {
+        if (other !== card && Phaser.Math.Distance.Between(card.x, card.y, other.x, other.y) < this.metrics.value(70)) {
           other.x += (card.x - other.x) * 0.08;
           other.y += (card.y - other.y) * 0.08;
         }
@@ -72,7 +74,7 @@ export class HandManager {
 
   tryPlayStack(mainCard, zone) {
     if (!this.scene.playerTurn) return this.layoutHand();
-    const stack = [mainCard, ...this.hand.filter((c) => c !== mainCard && Phaser.Math.Distance.Between(c.x, c.y, mainCard.x, mainCard.y) < 70)];
+    const stack = [mainCard, ...this.hand.filter((c) => c !== mainCard && Phaser.Math.Distance.Between(c.x, c.y, mainCard.x, mainCard.y) < this.metrics.value(70))];
     const totalCost = stack.reduce((s, c) => s + CardLogic.getComputedCard(c.cardInstance).cost, 0);
     if (totalCost > this.scene.currentMana) { this.scene.effectManager.floatingText(mainCard.x, mainCard.y - 50, 'Not enough mana', '#ffaa55'); return this.layoutHand(); }
 
